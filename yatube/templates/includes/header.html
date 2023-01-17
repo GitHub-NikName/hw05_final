@@ -1,0 +1,39 @@
+{% load static %}
+
+<div class="container">
+  <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+    <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+      <img src="{% static 'img/logo.png' %}"
+        width="30"
+        height="30"
+        class="d-inline-block align-top" alt="">
+        <span style="color:red">Ya</span>tube
+    </a>
+
+    <ul class="nav nav-pills col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+      {% with request.resolver_match.view_name as view_name %}
+      <li><a href="/" class="nav-link px-2 text-white {% if view_name  == 'posts:index' %}active{% endif %}">Home</a></li>
+      <li><a href="{% url 'about:tech' %}" class="nav-link px-2 text-white {% if view_name  == 'about:tech' %}active{% endif %}">Features</a></li>
+      <li><a href="{% url 'about:author' %}" class="nav-link px-2 text-white {% if view_name  == 'about:author' %}active{% endif %}">About</a></li>
+      {% endwith %}
+      {% if user.is_authenticated %}
+        <li><a href="{% url 'posts:post_create' %}" class="nav-link px-2 text-white">Новая запись</a></li>
+        <li><a href="{% url 'users:password_change' %}" class="nav-link px-2 text-white">Изменить пароль</a></li>
+        <li><a href="{% url 'users:logout' %}" class="nav-link px-2 text-white">Выйти</a></li>
+      {% endif %}
+    </ul>
+
+    <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
+      <input type="search" class="form-control form-control-dark text-bg-dark" placeholder="Search..." aria-label="Search">
+    </form>
+
+    <div class="text-end">
+      {% if user.is_authenticated %}
+        {{ user.username }}
+      {% else %}
+        <a href="{% url 'users:login' %}"><button type="button" class="btn btn-outline-light me-2">Login</button></a>
+        <a href="{% url 'users:signup' %}"><button type="button" class="btn btn-warning">Sign-up</button></a>
+      {% endif %}
+    </div>
+  </div>
+</div>

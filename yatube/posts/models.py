@@ -1,6 +1,7 @@
 from django.db import models
-from core.models import CreatedModel
 from django.contrib.auth import get_user_model
+
+from core.models import CreatedModel
 
 
 User = get_user_model()
@@ -65,6 +66,9 @@ class Comment(CreatedModel):
         help_text='Введите текст комментария'
     )
 
+    class Meta:
+        ordering = ['-created']
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
@@ -77,3 +81,10 @@ class Follow(models.Model):
         related_name='following',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_author_user_following'
+            )
+        ]

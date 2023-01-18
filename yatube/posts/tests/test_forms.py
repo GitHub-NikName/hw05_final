@@ -4,17 +4,12 @@ import tempfile
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
-from django.urls import reverse
-from django.contrib.auth import get_user_model
-from ..models import Post, Group
+from django.core.cache import cache
 
+from ..models import Post
+from shortcuts import group, post, User, url
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-User = get_user_model()
-
-
-def url(url, **kwargs):
-    return reverse(url, kwargs=kwargs)
 
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
@@ -22,17 +17,9 @@ class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='user')
-        cls.group = Group.objects.create(
-            title='Группа',
-            slug='slug',
-            description='Описание'
-        )
-        cls.post = Post.objects.create(
-            text='Пост',
-            group=cls.group,
-            author=cls.user
-        )
+        cls.user = User.objects.create_user('user')
+        cls.group = group('slug')
+        cls.post = post(cls.user, cls.group)
 
     @classmethod
     def tearDownClass(cls):
@@ -41,8 +28,9 @@ class PostFormTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.client = Client()
+        self.client.force_login(self.user)
+        cache.clear()
 
     def test_create_post(self):
         """Валидная форма создает запись в Post"""
@@ -51,14 +39,12 @@ class PostFormTests(TestCase):
             'text': 'Пост 2',
             'group': self.group.id
         }
-        res = self.authorized_client.post(
+        res = self.client.post(
             url('posts:post_create'),
             data=form_data,
             follow=True
         )
-        self.assertRedirects(
-            res, url('posts:profile', username=self.user.username)
-        )
+        self.assertRedirects(res, url('posts:profile', username='user'))
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
     def test_edit_post(self):
@@ -67,7 +53,7 @@ class PostFormTests(TestCase):
             'text': 'Отредактированный пост',
             'group': self.group.id
         }
-        self.authorized_client.post(
+        self.client.post(
             url('posts:post_edit', post_id=self.post.id),
             data=form_data,
             follow=True
@@ -98,12 +84,10 @@ class PostFormTests(TestCase):
             'group': self.group.id,
             'image': uploaded
         }
-        res = self.authorized_client.post(
+        res = self.client.post(
             url('posts:post_create'),
             data=form_data,
             follow=True
         )
-        self.assertRedirects(
-            res, url('posts:profile', username=self.user.username)
-        )
+        self.assertRedirects(res, url('posts:profile', username='user'))
         self.assertEqual(Post.objects.count(), posts_count + 1)

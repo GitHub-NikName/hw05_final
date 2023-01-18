@@ -1,17 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-# from django.views.decorators.cache import cache_page
 
 from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 
 
-# @cache_page(20, key_prefix='index_page')
 def index(request):
     """Главная страница"""
     template = 'posts/index.html'
-    post_list = Post.objects.all()
+    post_list = Post.objects.all().select_related('author', 'group')
     page = get_paginator_page(request, post_list, 10)
     context = {
         'page_obj': page,
@@ -24,7 +22,7 @@ def group_posts(request, slug):
     """Последние 10 постов в группе"""
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
-    post_list = group.post_set.all()
+    post_list = group.post_set.all().select_related('author')
     page = get_paginator_page(request, post_list, 10)
     context = {
         'group': group,
@@ -45,7 +43,7 @@ def get_paginator_page(request, post_list, num):
 def profile(request, username):
     """Страница пользователя"""
     author = get_object_or_404(User, username=username)
-    post_list = author.posts.all()
+    post_list = author.posts.all().select_related('group')
     page = get_paginator_page(request, post_list, 10)
     context = {
         'author': author,
@@ -60,7 +58,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     """Детальный просмотр публикции"""
     post = get_object_or_404(Post, pk=post_id)
-    comments = post.comments.all()
+    comments = post.comments.all().select_related('author')
     form = CommentForm()
     context = {
         'post': post,
@@ -119,7 +117,8 @@ def add_comment(request, post_id):
 def follow_index(request):
     template = 'posts/follow.html'
     follower = request.user.follower.values_list('author_id', flat=True)
-    post_list = Post.objects.filter(author__in=follower)
+    post_list = Post.objects.filter(author__in=follower).\
+        select_related('author', 'group')
     page = get_paginator_page(request, post_list, 10)
     context = {
         'page_obj': page,
@@ -131,9 +130,8 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    follower = request.user.follower.values_list('author_id', flat=True)
-    if request.user != author and author.id not in follower:
-        Follow.objects.create(
+    if request.user != author:
+        Follow.objects.get_or_create(
             user=request.user,
             author=author
         )
@@ -143,5 +141,5 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    Follow.objects.filter(user=request.user).filter(author=author).delete()
+    Follow.objects.get(user=request.user, author=author).delete()
     return redirect('posts:profile', username=username)

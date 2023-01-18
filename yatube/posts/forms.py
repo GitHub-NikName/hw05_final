@@ -12,3 +12,4 @@ class CommentForm(ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
+        # labels, help_text в модели?

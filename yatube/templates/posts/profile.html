@@ -6,7 +6,7 @@
   <h3>Всего постов: {{ author.posts.count }}</h3>
   <h3>Подписчиков: {{ author.following.count }}</h3>
   <div class="mb-5">
-    {% if user != author %}
+    {% if user != author and user.is_authenticated %}
       {% if following %}
         <a
           class="btn btn-lg btn-light"

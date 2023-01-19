@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import ModelForm, Textarea
 from .models import Post, Comment
 
 
@@ -12,4 +12,8 @@ class CommentForm(ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
-        # labels, help_text в модели?
+        widgets = {
+            'text': Textarea(attrs={'rows': 3}),
+        }
+        labels = {'text': 'Текст комментария', }
+        help_texts = {'text': 'Введите текст комментария'}

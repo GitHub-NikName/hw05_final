@@ -257,6 +257,6 @@ class PostCashTest(TestCase):
         Post.objects.get(id=self.post.id).delete()
         content_2 = self.client.get(url('posts:index')).content
         self.assertEqual(content_1, content_2)
-        time.sleep(20)
+        cache.clear()
         content_3 = self.client.get(url('posts:index')).content
         self.assertNotEqual(content_2, content_3)

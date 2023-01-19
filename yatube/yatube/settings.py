@@ -20,18 +20,33 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'g4s5^22xljn3vwewf6#*g68g!hbw-^8al9b9%r^c5je7i9voee'
+# SECRET_KEY = 'g4s5^22xljn3vwewf6#*g68g!hbw-^8al9b9%r^c5je7i9voee'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'g4s5^22xljn3vwewf6#*g68g!hbw-^8al9b9%r^c5je7i9voee'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+# DEBUG = bool(os.environ.get('DJANGO_DEBUG', True))
 
 ALLOWED_HOSTS = [
+    'www.djos.pythonanywhere.com',
+    'djos.pythonanywhere.com',
     'localhost',
     '127.0.0.1',
     '[::1]',
     'testserver',
 ]
 
+if DEBUG:  # If using Docker
+    import socket  # only if you haven't already imported this
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+
+# INTERNAL_IPS = [
+#     '127.0.0.1',
+# ]
 
 # Application definition
 
@@ -47,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sorl.thumbnail',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'yatube.urls'

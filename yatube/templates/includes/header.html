@@ -18,8 +18,8 @@
       {% endwith %}
       {% if user.is_authenticated %}
         <li><a href="{% url 'posts:post_create' %}" class="nav-link px-2 text-white">Новая запись</a></li>
-        <li><a href="{% url 'users:password_change' %}" class="nav-link px-2 text-white">Изменить пароль</a></li>
-        <li><a href="{% url 'users:logout' %}" class="nav-link px-2 text-white">Выйти</a></li>
+{#        <li><a href="{% url 'users:password_change' %}" class="nav-link px-2 text-white">Изменить пароль</a></li>#}
+{#        <li><a href="{% url 'users:logout' %}" class="nav-link px-2 text-white">Выйти</a></li>#}
       {% endif %}
     </ul>
 
@@ -27,13 +27,20 @@
       <input type="search" class="form-control form-control-dark text-bg-dark" placeholder="Search..." aria-label="Search">
     </form>
 
-    <div class="text-end">
-      {% if user.is_authenticated %}
-        {{ user.username }}
-      {% else %}
-        <a href="{% url 'users:login' %}"><button type="button" class="btn btn-outline-light me-2">Login</button></a>
-        <a href="{% url 'users:signup' %}"><button type="button" class="btn btn-warning">Sign-up</button></a>
-      {% endif %}
-    </div>
+    {% if user.is_authenticated %}
+      <div class="dropdown">
+        <button class="btn nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          {{ user.username }}
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="{% url 'users:password_change' %}" class="dropdown-item"><i class="bi bi-key"></i> Изменить пароль</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a href="{% url 'users:logout' %}" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Выйти</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <a href="{% url 'users:login' %}"><button type="button" class="btn btn-outline-light me-2">Login</button></a>
+      <a href="{% url 'users:signup' %}"><button type="button" class="btn btn-warning">Sign-up</button></a>
+    {% endif %}
   </div>
 </div>

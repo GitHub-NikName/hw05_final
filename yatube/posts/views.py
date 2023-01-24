@@ -9,7 +9,7 @@ from .forms import PostForm, CommentForm
 def index(request):
     """Главная страница"""
     template = 'posts/index.html'
-    post_list = Post.objects.all().select_related('author', 'group')
+    post_list = Post.objects.select_related('author', 'group')
     page = get_paginator_page(request, post_list, 10)
     context = {
         'page_obj': page,

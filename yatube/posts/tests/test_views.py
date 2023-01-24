@@ -1,6 +1,5 @@
 import tempfile
 import shutil
-import time
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
@@ -26,6 +25,7 @@ class PostPagesTests(TestCase):
         cls.user = User.objects.create_user('user')
         cls.group = group('slug')
         [post(cls.user, cls.group) for _ in range(12)]
+        # post(cls.user, batch_size=12)
         cls.urls = [
             url('posts:index'),
             url('posts:group_list', slug=cls.group.slug),
@@ -260,3 +260,18 @@ class PostCashTest(TestCase):
         cache.clear()
         content_3 = self.client.get(url('posts:index')).content
         self.assertNotEqual(content_2, content_3)
+
+
+# class TestTmp(TestCase):
+#     @classmethod
+#     def setUpClass(cls):
+#         super().setUpClass()
+#         cls.user = User.objects.create_user('user')
+#         post('user', 12)
+#
+#     def setUp(self):
+#         self.client = Client()
+#         self.client.force_login(self.user)
+#
+#     def test_count(self):
+#         self.assertEqual(Post.objects.count(), 12)

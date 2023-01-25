@@ -18,22 +18,6 @@ def url(url, **kwargs):
 def post(user, group=None, text=None, image=None):
     if isinstance(user, str):
         user, _ = User.objects.get_or_create(user)
-    # if batch_size:
-    #     objs = (
-    #         Post(
-    #             text=unique_string("post"),
-    #             author=user,
-    #             group=group,
-    #             image=image
-    #         ) for _ in range(batch_size)
-    #     )
-    #     from itertools import islice
-    #     while True:
-    #         batch = list(islice(objs, batch_size))
-    #         if not batch:
-    #             break
-    #         Post.objects.bulk_create(batch, batch_size)
-    #     return
     if not text:
         text = unique_string("post")
     return Post.objects.create(

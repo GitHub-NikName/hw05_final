@@ -1,71 +1,75 @@
+import requests
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
+from django.views.generic import ListView, DetailView, FormView
+from django.views.generic.detail import SingleObjectMixin
 
 
-def index(request):
-    """Главная страница"""
-    template = 'posts/index.html'
-    post_list = Post.objects.select_related('author', 'group')
-    page = get_paginator_page(request, post_list, 10)
-    context = {
-        'page_obj': page,
-        'index': True
-    }
-    return render(request, template, context)
+class Index(ListView):
+    template_name = 'posts/index.html'
+    queryset = Post.objects.select_related('author', 'group')
+    paginate_by = 10
+    extra_context = {'index': True}
 
 
-def group_posts(request, slug):
-    """Последние 10 постов в группе"""
-    template = 'posts/group_list.html'
-    group = get_object_or_404(Group, slug=slug)
-    post_list = group.post_set.all().select_related('author')
-    page = get_paginator_page(request, post_list, 10)
-    context = {
-        'group': group,
-        'page_obj': page,
-        'title': group.__str__
-    }
-    return render(request, template, context)
+class GroupPosts(SingleObjectMixin, Index):
+    template_name = 'posts/group_list.html'
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(queryset=Group.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['group'] = self.object
+        context['title'] = self.object.__str__
+        return context
+
+    def get_queryset(self):
+        return self.object.post_set.all().select_related('author')
 
 
-def get_paginator_page(request, post_list, num):
-    """Возвращает страницу пагинатора"""
-    paginator = Paginator(post_list, num)
-    page_number = request.GET.get('page')
-    page = paginator.get_page(page_number)
-    return page
+class FollowIndex(LoginRequiredMixin, Index):
+    template_name = 'posts/follow.html'
+    extra_context = {'follow': True}
+
+    def get_queryset(self):
+        follower = self.request.user.follower.values_list('author_id', flat=True)
+        return Post.objects.filter(author__in=follower).\
+            select_related('author', 'group')
 
 
-def profile(request, username):
-    """Страница пользователя"""
-    author = get_object_or_404(User, username=username)
-    post_list = author.posts.all().select_related('group')
-    page = get_paginator_page(request, post_list, 10)
-    context = {
-        'author': author,
-        'page_obj': page
-    }
-    if request.user.is_authenticated and request.user != author:
-        follower = request.user.follower.values_list('author_id', flat=True)
-        context['following'] = author.id in follower
-    return render(request, 'posts/profile.html', context)
+class Profile(Index):
+    template_name = 'posts/profile.html'
+
+    def get(self, request, *args, **kwargs):
+        self.author = get_object_or_404(User, username=kwargs['username'])
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['author'] = self.author
+        if self.request.user.is_authenticated and self.request.user != self.author:
+            follower = self.request.user.follower.values_list('author_id', flat=True)
+            context['following'] = self.author.id in follower
+        return context
+
+    def get_queryset(self):
+        return self.author.posts.all().select_related('group')
 
 
-def post_detail(request, post_id):
-    """Детальный просмотр публикции"""
-    post = get_object_or_404(Post, pk=post_id)
-    comments = post.comments.all().select_related('author')
-    form = CommentForm()
-    context = {
-        'post': post,
-        'comments': comments,
-        'form': form
-    }
-    return render(request, 'posts/post_detail.html', context)
+class PostDetail(DetailView):
+    model = Post
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comments'] = context['post'].comments.all().select_related('author')
+        context['form'] = CommentForm()
+        return context
 
 
 @login_required
@@ -102,29 +106,17 @@ def post_edit(request, post_id):
 
 
 @login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
+def add_comment(request, pk):
+    post = get_object_or_404(Post, pk=pk)
     form = CommentForm(request.POST or None)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
         comment.post = post
         comment.save()
-    return redirect('posts:post_detail', post_id=post_id)
+    return redirect('posts:post_detail', pk=pk)
 
 
-@login_required
-def follow_index(request):
-    template = 'posts/follow.html'
-    follower = request.user.follower.values_list('author_id', flat=True)
-    post_list = Post.objects.filter(author__in=follower).\
-        select_related('author', 'group')
-    page = get_paginator_page(request, post_list, 10)
-    context = {
-        'page_obj': page,
-        'follow': True
-    }
-    return render(request, template, context)
 
 
 @login_required

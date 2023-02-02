@@ -1,11 +1,19 @@
 version: '3'
 
 services:
-  django:
-    build: .
-    container_name: hw05_final
-    command: python yatube/manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
+    django:
+        build: .
+        container_name: hw05_final
+        command: python yatube/manage.py runserver 0.0.0.0:8000
+        volumes:
+            #hw05_final:
+                - .:/app
+
+        ports:
+            - "8000:8000"
+#        - type: bind
+#        source: .
+#        target: /app
+
+#            - .:/app
+    

@@ -51,10 +51,6 @@ if DEBUG:  # If using Docker
 # Application definition
 
 INSTALLED_APPS = [
-    'about.apps.AboutConfig',
-    'core.apps.CoreConfig',
-    'users.apps.UsersConfig',
-    'posts.apps.PostsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,6 +59,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sorl.thumbnail',
     'debug_toolbar',
+    'django_filters',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_swagger',
+    'about.apps.AboutConfig',
+    'core.apps.CoreConfig',
+    'users.apps.UsersConfig',
+    'posts.apps.PostsConfig',
 ]
 
 MIDDLEWARE = [
@@ -93,6 +97,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.year.year',
             ],
+            'libraries': {
+                'staticfiles': 'django.templatetags.static'
+            }
         },
     },
 ]
@@ -128,6 +135,23 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+DATE_INPUT_FORMATS = ['%d.%m.%Y', '%Y-%m-%d', ]
+DATE_FORMAT = 'd.m.Y'
+DATETIME_FORMAT = 'd.m.Y H:i'
+SHORT_DATETIME_FORMAT = 'd.m.Y H:i'
+
+LOGIN_URL = '/admin/login/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    'DATE_INPUT_FORMATS': DATE_INPUT_FORMATS,
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',  # LimitOffsetPagination
+    'PAGE_SIZE': 10,
+}
 
 
 # Internationalization
